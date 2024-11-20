@@ -1,0 +1,31 @@
+.background{
+    background-color: #F8FAFD;
+}
+
+.top-bar{
+    height: 20px;
+}
+
+.bottom-bar{
+    height: 20px;
+}
+
+#input{
+    width: 500px;
+}
+
+#tasks{
+    width: 100px;
+}
+
+#chunkify{
+    background-color: #3E2F5B; 
+    color: white;
+    border-color: #3E2F5B;
+}
+
+#dueDate{
+    background-color: #E01A4F; 
+    color: white;
+    border-color: #E01A4F;
+}
