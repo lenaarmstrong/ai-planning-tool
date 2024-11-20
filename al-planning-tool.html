@@ -10,28 +10,36 @@
   <body>
 
     <div class="background">
-    <div class="top-bar" style="background-color:#3E2F5B"></div>
-    <div class="top-bar" style="background-color:#F9C22E"></div>
-    <div class="top-bar" style="background-color:#53B3CB"></div>
-    <div class="top-bar" style="background-color:#E01A4F"></div>
+    
+    <div class="bar" style="background-color:#3E2F5B"></div>
+    <div class="bar" style="background-color:#F9C22E"></div>
+    <div class="bar" style="background-color:#53B3CB"></div>
+    <div class="bar" style="background-color:#E01A4F"></div>
+
+    <h1 class="m-5 fw-bold">ChunkIt</h1>
+
+    <!-- Add task & buttons -->
+    <div class="addTask">
+    <div class="input-group ms-5 mb-5">
+      <input type="text" class="form-control" placeholder="Add a task..." aria-label="Task" aria-describedby="button-addon2">
+      
+      <!-- Due Date -->
+      <input id="dueDate" class="btn btn-danger" 
+        type="datetime-local" 
+        id="Test_DatetimeLocal" 
+        min="2024-01-01T00:00" 
+        max="2030-12-31T23:59" 
+        step="1"></input>
+      
+        <!-- Chunkify -->
+        <button id="chunkify" type="button" class="btn btn-info">Chunkify</button>
+    </div>
+    </div>
 
    <div class="m-5">
-      <h1 class="mb-5">The Ultimate AI-based Planning Tool</h1>
-
-      
-
       <div class="container">
         <div class="row align-items-start">
-          <div class="col">
-            <!-- Add task & buttons -->
-            <div class="input-group mb-5">
-              <input type="text" class="form-control" placeholder="Add a task..." aria-label="Task" aria-describedby="button-addon2">
-              <!-- Due Date -->
-              <button id="dueDate" type="button" class="btn btn-danger">Due Date</button>
-              <!-- Chunkify -->
-              <button id="chunkify" type="button" class="btn btn-info">Chunkify</button>
-            </div>
-
+          <div class="col me-5 mb-5">
             <!-- After "chunkify" add a changable subtask with checkbox -->
             <div class="tasks">
               
@@ -93,15 +101,15 @@
             </div>
           </div>
           <div class="col">
+            <div class="mt-1"></div>
+
             <!-- Integrate Calendar -->
-            <div class="ms-5">
-              <iframe src="https://calendar.google.com/calendar/embed?height=450&wkst=1&ctz=America%2FNew_York&bgcolor=%23ffffff&showPrint=0&showTitle=0&showTz=0&src=Y18xYmJmOWM2YzM2YTFhZDBlYTRhZTIxM2U1YWYwMWY3YjJhMmIzYzU0ZWJjMWRjYTcwZGNkMDQ2NDM1NDc2ZjcxQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20&color=%23009688" style="border-width:0" width="600" height="450" frameborder="0" scrolling="no"></iframe>
-            </div>
+            <iframe src="https://calendar.google.com/calendar/embed?height=450&wkst=1&ctz=America%2FNew_York&bgcolor=%23ffffff&showPrint=0&showTitle=0&showTz=0&src=Y18xYmJmOWM2YzM2YTFhZDBlYTRhZTIxM2U1YWYwMWY3YjJhMmIzYzU0ZWJjMWRjYTcwZGNkMDQ2NDM1NDc2ZjcxQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20&color=%23009688" style="border-width:0" width="600" height="450" frameborder="0" scrolling="no"></iframe>
           </div>
         </div>
       </div>
     </div> 
-    <div class="bottom-bar" style="background-color:#70A288"></div>
+    <div class="bar" style="background-color:#70A288"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

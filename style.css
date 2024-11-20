@@ -1,13 +1,9 @@
 .background{
-    background-color: #F8FAFD;
+    background-color: #FFFFFF;
 }
 
-.top-bar{
-    height: 20px;
-}
-
-.bottom-bar{
-    height: 20px;
+.bar{
+    height: 15px;
 }
 
 #input{
@@ -28,4 +24,8 @@
     background-color: #E01A4F; 
     color: white;
     border-color: #E01A4F;
+}
+
+.addTask{
+    width: 90%;
 }
