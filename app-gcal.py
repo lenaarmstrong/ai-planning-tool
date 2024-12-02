@@ -34,7 +34,7 @@ def get_calendar_service():
         else:
             # Initiate OAuth2 flow
             flow = InstalledAppFlow.from_client_secrets_file(
-                "client_secrets.json", SCOPES
+                "client_secret.json", SCOPES
             )
             auth_url, state = flow.authorization_url(prompt='consent')
 

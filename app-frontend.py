@@ -7,6 +7,7 @@ import datetime
 # from google.auth.transport.requests import Request
 import os
 import pickle
+from streamlit_calendar import calendar
 
 # Streamlit UI
 st.title("ChunkIt")
@@ -138,3 +139,4 @@ st.markdown (
     """,
     unsafe_allow_html=True,
 )  
+
