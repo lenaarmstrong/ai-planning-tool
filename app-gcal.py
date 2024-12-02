@@ -13,56 +13,56 @@ TOKEN_DIR = "token_files"
 TOKEN_FILE = "token_calendar_v3.json"
 
 
-def get_calendar_service():
-    """Authenticate and return the Google Calendar service."""
+def create_service(client_secret_file, api_name, api_version, *scopes, prefix=''):
+    CLIENT_SECRET_FILE = client_secret_file
+    API_SERVICE_NAME = api_name
+    API_VERSION = api_version
+    SCOPES = [scope for scope in scopes[0]]
+    
     creds = None
+    working_dir = os.getcwd()
+    token_dir = 'token files'
+    token_file = f'token_{API_SERVICE_NAME}_{API_VERSION}{prefix}.json'
 
-    # Ensure token directory exists
-    if not os.path.exists(TOKEN_DIR):
-        os.makedirs(TOKEN_DIR)
+    ### Check if token dir exists first, if not, create the folder
+    if not os.path.exists(os.path.join(working_dir, token_dir)):
+        os.mkdir(os.path.join(working_dir, token_dir))
 
-    token_path = os.path.join(TOKEN_DIR, TOKEN_FILE)
+    if os.path.exists(os.path.join(working_dir, token_dir, token_file)):
+        creds = Credentials.from_authorized_user_file(os.path.join(working_dir, token_dir, token_file), SCOPES)
+        # with open(os.path.join(working_dir, token_dir, token_file), 'rb') as token:
+        #   cred = pickle.load(token)
 
-    # Load existing credentials if available
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-
-    # Refresh or reauthorize if credentials are invalid
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # Initiate OAuth2 flow
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "client_secrets.json", SCOPES
-            )
-            auth_url, state = flow.authorization_url(prompt='consent')
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
 
-            # Save state in session
-            if "oauth_state" not in st.session_state:
-                st.session_state.oauth_state = state
+        with open(os.path.join(working_dir, token_dir, token_file), 'w') as token:
+            token.write(creds.to_json())
 
-            # Provide login link
-            st.write(f'<a target="_self" href="{auth_url}">Log in to Google</a>', unsafe_allow_html=True)
+    try:
+        service = build(API_SERVICE_NAME, API_VERSION, credentials=creds, static_discovery=False)
+        print(API_SERVICE_NAME, API_VERSION, 'service created successfully')
+        return service
+    except Exception as e:
+        print(e)
+        print(f'Failed to create service instance for {API_SERVICE_NAME}')
+        os.remove(os.path.join(working_dir, token_dir, token_file))
+        return None
 
-            # Wait for redirect response
-            query_params = st.query_params
-            if "code" in query_params and "state" in query_params:
-                if query_params["state"][0] == st.session_state.oauth_state:
-                    flow.fetch_token(authorization_response=f"http://localhost:8501?code={query_params['code'][0]}")
-                    creds = flow.credentials
+def convert_to_RFC_datetime(year=1900, month=1, day=1, hour=0, minute=0):
+    dt = datetime.datetime(year, month, day, hour, minute, 0).isoformat() + 'Z'
+    return dt
 
-                    # Save new token
-                    with open(token_path, "w") as token_file:
-                        token_file.write(creds.to_json())
-                else:
-                    st.error("State mismatch. Please try logging in again.")
-                    return None
+CLIENT_SECRET_FILE = 'client_secret.json'
+API_NAME = 'calendar'
+API_VERSION = 'v3'
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-    # Create Google Calendar service
-    if creds:
-        return build("calendar", "v3", credentials=creds)
-    return None
+service = create_service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
 
 
 # Function to list user calendar events
@@ -94,8 +94,6 @@ def add_event_to_calendar(service, summary, start_time, duration=1):
 # Streamlit app layout
 st.title("ChunkIt: Google Calendar Integration and Automation")
 
-# Authenticate Google Calendar
-service = get_calendar_service()
 
 if service:
     # Welcome user
@@ -104,51 +102,81 @@ if service:
     st.success(f"Welcome, {user_name}!")
 
     # Display calendar events
-    list_user_events(service)
+    #list_user_events(service)
 
-    # Input for task and subtasks
-    st.write("### Chunkify Your Task")
-    query = st.text_input("Enter your task:")
-    task_due_date = st.date_input("Due Date", value=datetime.date.today())
-    chunkify_button = st.button("Chunkify")
+    col = st.columns((9, 3, 3))
 
-    if chunkify_button and query:
-        # Simulate API call to chunkify task
-        API_URL = "http://localhost:9000/api/perform_rag"  # Example API
-        # Uncomment to send a real API request
-        # response = requests.post(API_URL, json={"query": query})
-        # subtasks = response.json().get("subtasks", [])
-        # Simulated subtasks for testing
-        subtasks = ["Research", "Draft Outline", "Write First Draft", "Edit and Submit"]
+# Initialize session state for inputs and subtasks
+if "query" not in st.session_state:
+    st.session_state["query"] = ""
+if "due_date" not in st.session_state:
+    st.session_state["due_date"] = None
+if "subtasks" not in st.session_state:
+    st.session_state["subtasks"] = []
 
-        st.write(f"### Subtasks for: {query}")
-        for i, subtask in enumerate(subtasks):
-            st.write(f"{i + 1}. {subtask}")
+# Input section (only once)
+st.write("### Task Input")
+query = st.text_input(
+    "Enter your task and let AI chunk it for you!", 
+    st.session_state["query"], 
+    key="query_input"
+)
+d = st.date_input(
+    "Due Date", 
+    value=st.session_state["due_date"], 
+    key="due_date_input"
+)
 
-        # Add subtasks to calendar
-        add_subtasks_button = st.button("Add Subtasks to Google Calendar")
-        if add_subtasks_button:
-            for i, subtask in enumerate(subtasks):
-                start_datetime = datetime.datetime.combine(task_due_date, datetime.time(9, 0)) + datetime.timedelta(hours=i * 2)
-                add_event_to_calendar(service, subtask, start_datetime)
-            st.success("Subtasks added to Google Calendar!")
+chunkify = st.button("Chunkify!", key="chunkify_button")
 
-    # Add a custom event
-    st.write("### Add a Custom Event")
-    task_name = st.text_input("Task Name")
-    custom_due_date = st.date_input("Task Due Date", value=datetime.date.today())
-    task_start_time = st.time_input("Start Time", datetime.time(9, 0))
-    add_task_button = st.button("Add Task to Google Calendar")
+if chunkify:
+    # Save inputs to session state
+    st.session_state["query"] = query
+    st.session_state["due_date"] = d
 
-    if add_task_button and task_name:
-        try:
-            start_datetime = datetime.datetime.combine(custom_due_date, task_start_time)
-            add_event_to_calendar(service, task_name, start_datetime)
-            st.success(f"Task '{task_name}' added to your Google Calendar!")
-        except Exception as e:
-            st.error(f"Failed to add task: {e}")
-    else:
-        if not task_name:
-            st.warning("Please enter a task name.")
-        elif not service:
-            st.warning("Please log in to Google Calendar to access this feature.")
+    # Simulate AI chunkify logic
+    st.session_state["subtasks"] = ["Subtask 1: Research topic", "Subtask 2: Write draft", "Subtask 3: Submit report"]
+
+# Subtasks Section
+if st.session_state["subtasks"]:
+    st.write("### Your Chunkified Subtasks")
+    for i, subtask in enumerate(st.session_state["subtasks"], start=1):
+        col = st.columns((9, 3))
+        with col[0]:
+            st.write(f"**Subtask #{i}:** {subtask}")
+        with col[1]:
+            # Button to add subtask to Google Calendar
+            if st.button(f"Add Subtask #{i} to Calendar", key=f"add_subtask_{i}_button"):
+                try:
+                    # Calculate start and end times
+                    event_date = datetime.datetime.combine(st.session_state["due_date"], datetime.datetime.min.time())
+                    start_time = event_date + datetime.timedelta(days=i - 1)
+                    end_time = start_time + datetime.timedelta(hours=1)
+
+                    # Define the event
+                    event = {
+                        'summary': subtask,
+                        'start': {'dateTime': start_time.isoformat(), 'timeZone': 'UTC'},
+                        'end': {'dateTime': end_time.isoformat(), 'timeZone': 'UTC'},
+                    }
+                    
+                    # Insert event into Google Calendar
+                    service.events().insert(calendarId='primary', body=event).execute()
+                    st.success(f"Subtask #{i} successfully added to your Google Calendar!")
+                except Exception as e:
+                    st.error(f"Failed to add Subtask #{i} to Google Calendar. Error: {e}")
+
+
+
+# Add calendar
+st.markdown (
+    f"""
+    <div style="margin: 5rem"></div>
+    <div style="display: flex; align-items: center; justify-content: center"> 
+        <iframe src="https://calendar.google.com/calendar/embed?height=450&wkst=1&ctz=America%2FNew_York&bgcolor=%23ffffff&showPrint=0&showTitle=0&showTz=0&src=Y18xYmJmOWM2YzM2YTFhZDBlYTRhZTIxM2U1YWYwMWY3YjJhMmIzYzU0ZWJjMWRjYTcwZGNkMDQ2NDM1NDc2ZjcxQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20&color=%23009688" style="border-width:0" width="600" height="450" frameborder="0" scrolling="no"></iframe>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)  
+
+
