@@ -168,15 +168,35 @@ if st.session_state["subtasks"]:
 
 
 
-# Add calendar
-st.markdown (
-    f"""
-    <div style="margin: 5rem"></div>
-    <div style="display: flex; align-items: center; justify-content: center"> 
-        <iframe src="https://calendar.google.com/calendar/embed?height=450&wkst=1&ctz=America%2FNew_York&bgcolor=%23ffffff&showPrint=0&showTitle=0&showTz=0&src=Y18xYmJmOWM2YzM2YTFhZDBlYTRhZTIxM2U1YWYwMWY3YjJhMmIzYzU0ZWJjMWRjYTcwZGNkMDQ2NDM1NDc2ZjcxQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20&color=%23009688" style="border-width:0" width="600" height="450" frameborder="0" scrolling="no"></iframe>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)  
+# Fetch the user's primary calendar ID
+try:
+    calendar_list = service.calendarList().list().execute()
+    primary_calendar_id = None
+
+    # Find the primary calendar
+    for calendar_entry in calendar_list.get('items', []):
+        if calendar_entry.get('primary', False):
+            primary_calendar_id = calendar_entry.get('id')
+            break
+
+    if primary_calendar_id:
+        # Construct the iframe URL for the user's primary calendar
+        calendar_embed_url = f"https://calendar.google.com/calendar/embed?src={primary_calendar_id}&ctz=UTC"
+
+        # Add the user's calendar
+        st.markdown(
+            f"""
+            <div style="margin: 5rem"></div>
+            <div style="display: flex; align-items: center; justify-content: center"> 
+                <iframe src="{calendar_embed_url}" style="border-width:0" width="600" height="450" frameborder="0" scrolling="no"></iframe>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.warning("Unable to retrieve your primary calendar. Please ensure you have access to it.")
+except Exception as e:
+    st.error(f"An error occurred while retrieving your calendar: {e}")
+
 
 
